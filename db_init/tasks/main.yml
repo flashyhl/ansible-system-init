@@ -1,0 +1,10 @@
+---
+- name: 检查Jenkins的参数项正确性
+  include_tasks: check_para.yml
+
+- name: "检查目标服务器{{ server_name }}的MySQL信息"
+  include_tasks: check_mysql.yml
+
+- name: "导入{{ env_attr }}环境的数据库数据到目标服务器{{ server_name }}的MySQL数据库中"
+  include_tasks: import_data.yml
+ 

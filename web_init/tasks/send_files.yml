@@ -1,0 +1,19 @@
+---
+- name: "检查容器(web_{{ webname }})是否存在"
+  shell: docker ps -a | awk '{print $NF}' | grep "web_{{ webname }}" | wc -l
+  register: docker_ps_result
+
+- name: "检查到容器(web_{{ webname }})已存在"
+  fail:
+    msg: "检查到容器(web_{{ webname }})已存在，不需要进行复制配置文件"
+  when: docker_ps_result.stdout != "0"
+
+- name: 复制容器(web_{{ webname }})的Nginx配置文件到目标服务器目录(/etc/nginx)
+  template: 
+    src: nginx.conf.j2 
+    dest: "{{ nginx_config_path }}/nginx_{{ webname }}.conf"
+
+- name: 复制容器(web_{{ webname }})的Nginx配置文件到目标服务器目录(/etc/nginx/conf.d)
+  template: 
+    src: "{{ webname }}.conf.j2" 
+    dest: "{{ nginx_confd_path }}/{{ webname }}.conf"

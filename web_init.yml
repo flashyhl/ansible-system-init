@@ -1,0 +1,6 @@
+- name: "Web前端Docker容器创建......"
+  hosts: "{{ server_name }}"
+  gather_facts: True
+  become: yes
+  roles:
+   - { role: web_init }

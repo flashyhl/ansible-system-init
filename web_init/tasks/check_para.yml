@@ -1,0 +1,17 @@
+---
+- name: 检查选择的Web应用名称是否为空
+  fail:
+    msg: "检查到选择的Web应用名为空，请正确的选择应用名称！"
+  when: web_app == ""
+
+- name: 检查服务器名是否为空
+  fail: 
+    msg: "检查到你所输入的服务器名为空，请正确输入服务器名" 
+  when: server_name == ""
+
+- name: 检查环境名称是否为空
+  fail:
+    msg: "检查到你所选择的Type为test，而环境名称为空，请正确输入环境名称"
+  when: 
+    - env == ""
+    - type == "test"

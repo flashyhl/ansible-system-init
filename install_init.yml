@@ -1,0 +1,6 @@
+- name: "新的服务器初始化或者基础软件安装......"
+  hosts: "{{ server_name  }}"
+  gather_facts: True
+  become: yes
+  roles:
+   - { role: install_init }

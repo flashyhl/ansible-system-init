@@ -1,0 +1,5 @@
+{% if env == "prod" %}
+ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAvoRZT9DOSEw8XGxxxxxxBmt4dbIhAR8iRzBZcJHOubjRRr+ID++XKak6YwB0elDQOy3fIulKb8DTDlEdMuk1tQPj08eL8ufDOztEvz7sayxX3tBiJZl6MtbXZkuvZij7xKnKjWTg5m0fYWsQOpYY8MqlCjIbEm+yuGiTWxxxxxxxxjAQ16eo8+fzkZ5xxxxxxtmrXITA+zQp7gD0qJBVOQYjQNbJ6+kzpQVN2k9LEwsUcnAFp0YkJnuC/IH5i43ljRqH67qHoAo2N2vd9CxMFh6jc6A8lbFX7hZSKl6E8X1ET+HFVGEA8Hio0mFx/8QB+TcRG7Ay+G/+1KmbfRpQ== rsa-key-1
+{% elif env == "test" %}
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDP1ovXOplxxxxxxxBfcJR9Ke+SQNXBteMI21FfQ/1b7tuJ17sMuueg6b+VoLzWUz0YNUa4qyivNSLlSxxxxxAB1lQJEmaUKraKG0OIZFzkyuCCw/hiBdQOUa25IAAlZtcPjE4LX/J0Z5eXM4LxZjXwD9wJP8U28Z/2K30HRIHMgUvq+mRoeWotv3V1vcOyP/gmO2r51Y77wylFBho+8ZCn0v7b/H1jcU2/oyHMqGRsixxxxxxxwrKr8XkpGmqW4m9+LKFqQ6H/XICgK0iJRhC6hScFN5fIzUNQkWlgsuthgIrORRj+rAk0HRtDcIQ1BZiIJAu8AaFvKEHlIhm44Jt ansible-generated on IGIX_SH_OPTest01
+{% endif %}

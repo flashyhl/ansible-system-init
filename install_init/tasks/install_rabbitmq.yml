@@ -1,0 +1,39 @@
+---
+- name: 判断目标服务器RabbitMQ是否安装
+  shell: rpm -qa | grep "{{ rabbitmq_package }}" | wc -l  warn=False
+  register: yum_jv_result
+  ignore_errors: True
+
+- name: 复制RabbitMQ安装包到目标服务器中
+  copy:
+    src: rabbitmq/
+    dest: "{{ remote_package_path }}"
+    directory_mode: True
+  when: yum_jv_result.stdout == "0"
+
+- name: 获取RabbitMQ安装包列表
+  find:
+    paths: "{{ remote_package_path }}"
+    patterns: '*.rpm'
+  register: files_list
+  when: yum_jv_result.stdout == "0"
+
+- name: 安装RabbitMQ包以及依赖包
+  yum:
+    name: "{{ line_item.path }}"
+    state: present
+  with_items: "{{ files_list.files }}"
+  loop_control:
+    loop_var: line_item
+  when: yum_jv_result.stdout == "0"
+
+- name: 删除RabbitMQ安装文件
+  file:
+    path: "{{ remote_package_path }}"
+    state: absent
+  when: yum_jv_result.stdout == "0"
+
+- name: 目标服务器RabbitMQ已经安装，不需要再次安装
+  debug: 
+    msg: "RabbitMQ不需要安装"
+  when: yum_jv_result.stdout != "0"

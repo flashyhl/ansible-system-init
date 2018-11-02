@@ -1,0 +1,159 @@
+---
+- name: 判断目标服务器zabbix_agent是否安装
+  shell: rpm -qa | grep "{{ zabbix_agent_package }}" | wc -l  warn=False
+  register: yum_jv_result
+  ignore_errors: True
+
+- name: 复制zabbix_agent安装包到目标服务器中
+  copy:
+    src: zabbix-agent/
+    dest: "{{ remote_package_path }}"
+    directory_mode: True
+  when: yum_jv_result.stdout == "0"
+
+- name: 获取zabbix_agent安装包列表
+  find:
+    paths: "{{ remote_package_path }}"
+    patterns: '*.rpm'
+  register: files_list
+  when: yum_jv_result.stdout == "0"
+
+- name: 安装zabbix_agent包以及依赖包
+  yum:
+    name: "{{ line_item.path }}"
+    state: present
+  with_items: "{{ files_list.files }}"
+  loop_control:
+    loop_var: line_item
+  when: yum_jv_result.stdout == "0"
+
+- name: 删除zabbix-agent安装文件
+  file:
+    path: "{{ remote_package_path }}"
+    state: absent
+  when: yum_jv_result.stdout == "0"
+
+
+- name: 修改zabbix_agent的配置文件
+  template:
+    src: zabbix-agent/zabbix_agentd.conf.j2
+    dest: "{{ zabbix_agent_config_file }}"
+  when: yum_jv_result.stdout == "0"
+
+- name: 启动zabbix_agent服务
+  systemd:
+    state: started
+    enabled: yes
+    name: zabbix-agent
+  when: yum_jv_result.stdout == "0"
+
+- name: 等待zabbix_agent启动
+  wait_for:
+    port: 10050
+    host: "{{ ansible_default_ipv4.address }}"
+    timeout: 1
+  register: return_result
+  until: return_result.elapsed == 0
+  retries: 10
+  delay: 1
+  ignore_errors: False
+  when: yum_jv_result.stdout == "0"
+
+- name: Zabbix_agent启动失败 
+  fail:
+    msg: "Zabbix安装失败，需要手动安装"
+  when: yum_jv_result.stdout == "0" and return_result.elapsed != 0
+
+- name: 把服务器添加到测试环境Zabbix-Web中
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_web_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: "{{ server_name }}"
+    visible_name: "{{ server_name }}"
+    description: "Linux Server({{ server_name }})"
+    host_groups:
+      - "{{ zabbix_host_groups }}"
+    link_templates:
+      - "{{ zabbix_link_templates }}"
+    status: enabled
+    state: present
+    interfaces:
+      - type: 1
+        main: 1
+        useip: 1
+        ip: "{{ ansible_default_ipv4.address }}"
+        dns: ""
+        port: 10050
+  ignore_errors: True
+  register: zabbix_result
+  when: 
+    - yum_jv_result.stdout == "0"
+    - env == "test"
+
+- name: 新的服务器添加到测试环境Zabbix-Web中成功
+  debug:
+    msg: "添加到测试环境Zabbix-Web中成功！"
+  when: 
+    - zabbix_result is changed 
+    - yum_jv_result.stdout == "0" 
+    - env == "test"
+
+- name: 新服务器添加到测试环境Zabbix-web中失败
+  fail:
+    msg: "添加新服务器到测试环境Zabbix-web的时候出现错误，请手动检查你的配置"
+  when:
+    - not (zabbix_result is changed)
+    - yum_jv_result.stdout == "0"
+    - env == "test"
+
+- name: 把服务器添加到生产环境Zabbix-Web中
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_web_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: "{{ server_name }}"
+    visible_name: "{{ server_name }}"
+    description: "Cloud Host({{ server_name }})"
+    host_groups:
+      - "{{ zabbix_host_groups }}"
+    link_templates:
+      - "{{ zabbix_link_templates }}"
+    status: enabled
+    state: present
+    interfaces:
+      - type: 1
+        main: 1
+        useip: 1
+        ip: "{{ ansible_default_ipv4.address }}"
+        dns: ""
+        port: 10050
+    proxy: "{{ zabbix_proxy }}"
+  ignore_errors: True
+  register: zabbix_result
+  when: 
+    - yum_jv_result.stdout == "0"
+    - env == "prod"
+
+- name: 新的服务器添加到生产环境Zabbix-Web中成功
+  debug:
+    msg: "添加到生产环境Zabbix-Web中成功！"
+  when:
+    - zabbix_result is changed
+    - yum_jv_result.stdout == "0"
+    - env == "prod"
+
+- name: 新服务器添加到生产环境Zabbix-web中失败
+  fail:
+    msg: "添加新服务器到生产环境Zabbix-Web中的时候出现错误，请手动检查你的配置"
+  when:
+    - not (zabbix_result is changed)
+    - yum_jv_result.stdout == "0"
+    - env == "prod"
+
+- name: 目标服务器zabbix-agent已经安装，不需要再次安装
+  debug: 
+    msg: "Zabbix-agent不需要安装"
+  when: yum_jv_result.stdout != "0"

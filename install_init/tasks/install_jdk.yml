@@ -1,0 +1,107 @@
+---
+- name: 判断目标服务器JDK是否安装
+  shell: rpm -qa | grep "{{ jdk_package }}" | wc -l  warn=False
+  register: yum_jv_result
+  ignore_errors: True
+
+#- debug:
+#    msg: "{{ yum_jv_result }}"
+
+- name: 复制JDK安装包到目标服务器中
+  copy:
+    src: jdk/
+    dest: "{{ remote_package_path }}"
+    directory_mode: True
+  when: yum_jv_result.stdout == "0"
+
+- name: 获取安装JDK包列表
+  find:
+    paths: "{{ remote_package_path }}"
+    patterns: '*.rpm'
+  register: files_list
+  when: yum_jv_result.stdout == "0"
+
+- name: 安装JDK包以及依赖包
+  yum:
+    name: "{{ line_item.path }}"
+    state: present
+  with_items: "{{ files_list.files }}"
+  loop_control:
+    loop_var: line_item
+  when: yum_jv_result.stdout == "0"
+
+- name: 删除JDK安装文件
+  file:
+    path: "{{ remote_package_path }}"
+    state: absent
+  when: yum_jv_result.stdout == "0"
+
+- name: 检查测试环境Java应用的APP路径是否存在
+  stat:
+    path: "{{ java_app_path_test }}"
+  register: stat_path
+  when:
+    - env == "test"
+    - yum_jv_result.stdout == "0"
+
+- name: 测试环境Java应用的APP路径不存在，需要创建
+  file:
+    path: "{{ java_app_path_test }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  when:
+    - env == "test"
+    - yum_jv_result.stdout == "0"
+    - stat_path.stat.exists == False 
+
+- name: 检查生产环境Java应用的APP路径是否存在
+  stat:
+    path: "{{ java_app_path_prod }}"
+  register: stat_path
+  when:
+    - env == "prod"
+    - yum_jv_result.stdout == "0"
+
+- name: 生产环境Java应用的APP路径不存在，需要创建
+  file:
+    path: "{{ java_app_path_prod }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  when:
+    - env == "prod"
+    - yum_jv_result.stdout == "0"
+    - stat_path.stat.exists == False    
+
+- name: 检查测试环境或者生产环境应用服务的logs路径是否存在
+  stat:
+    path: "{{ app_log_path }}"
+  register: stat_path
+  when:
+    - yum_jv_result.stdout == "0"
+
+- name: 测试环境或者生产环境应用服务的logs路径不存在，需要创建
+  file:
+    path: "{{ app_log_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  when:
+    - yum_jv_result.stdout == "0"
+    - stat_path.stat.exists == False
+
+- name: 复制Java应用所使用的API证书到目标服务器
+  copy:
+    src: java_app_certs/apiclient_cert.p12
+    dest: "{{ java_cert_config_file }}"
+  when:
+    - yum_jv_result.stdout == "0"
+
+- name: 目标服务器JDK已经安装，不需要再次安装
+  debug: 
+    msg: "JDK不需要安装"
+  when: yum_jv_result.stdout != "0"

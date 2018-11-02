@@ -1,0 +1,5 @@
+---
+- name: 修改目标服务器主机名
+  hostname: 
+    name: "{{ server_name }}"
+  register: name_result

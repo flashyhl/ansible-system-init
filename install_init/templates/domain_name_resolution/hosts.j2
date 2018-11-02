@@ -1,0 +1,32 @@
+{% if env == "test" %}
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+{{ ansible_default_ipv4.address }} {{ server_name }}
+xxx.xxx.xxx.xxx harbor.test.com
+
+{% elif env == "prod" %}
+# Your system has configured 'manage_etc_hosts' as True.
+# As a result, if you wish for changes to this file to persist
+# then you will need to either
+# a.) make changes to the master file in /etc/cloud/templates/hosts.redhat.tmpl
+# b.) change or remove the value of 'manage_etc_hosts' in
+#     /etc/cloud/cloud.cfg or cloud-config from user-data
+# 
+# The following lines are desirable for IPv4 capable hosts
+127.0.0.1 localhost.localdomain localhost
+127.0.0.1 localhost4.localdomain4 localhost4
+
+# The following lines are desirable for IPv6 capable hosts
+::1 localhost.localdomain localhost
+::1 localhost6.localdomain6 localhost6
+
+{{ ansible_default_ipv4.address }} {{ server_name }}
+
+172.16.16.6 eureka1.test.com
+172.16.16.7 eureka2.test.com
+172.16.16.18 db.test.com
+172.16.2.12 redis.test.com
+172.16.1.17 harbor.test.com
+{% endif %}
+

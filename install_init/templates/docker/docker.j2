@@ -1,0 +1,5 @@
+{% if env == "test" %}
+OPTIONS='--insecure-registry xxx.xxx.xxx.xxx --insecure-registry harbor.igix.com'
+{% elif env == "prod" %}
+OPTIONS='--insecure-registry zzz.xxx.xxx.zzz --insecure-registry harbor.igix.com'
+{% endif %}

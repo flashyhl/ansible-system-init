@@ -1,0 +1,46 @@
+filebeat:
+  prospectors:
+    -
+      paths:
+        - /data/logs/*.log
+      fields:
+        doc_type: java_service
+      multiline.pattern: ^\d
+      multiline.negate: true
+      multiline.match: after
+      multiline.timeout: 10s
+    -
+      paths:
+        - /data/logs/action/*.log
+      fields:
+        doc_type: useraction
+    -
+      paths:
+        - /data/logs/web_www_log/error.log
+        - /data/logs/web_member_log/error.log
+        - /data/logs/web_lp_log/error.log
+        - /data/logs/web_member_tutor_log/error.log
+        - /data/logs/web_m_log/error.log
+      fields:
+        doc_type: nginx_error
+    -
+      paths:
+        - /data/logs/web_www_log/access.log
+        - /data/logs/web_member_log/access.log
+        - /data/logs/web_lp_log/access.log
+        - /data/logs/web_member_tutor_log/access.log
+        - /data/logs/web_m_log/access.log
+      fields:
+        doc_type: nginx_access
+
+{% if env == "test" %}
+output.logstash:
+  hosts: ["logstash.igix.com:5044"]
+
+{% elif env == "prod" %}
+output.redis:
+  hosts: ["redis.igix.com:6379"]
+  db: 15
+  password: "IGIX#redis@2018"
+  key: "logs"
+{% endif %}

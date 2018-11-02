@@ -1,0 +1,58 @@
+[client]
+port=3306
+socket=/var/lib/mysql/mysql.sock
+default-character-set=utf8mb4
+
+
+[mysqld]
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+bind_address={{ ansible_default_ipv4.address }}
+character_set_server=utf8mb4
+init_connect='SET NAMES utf8mb4'
+explicit_defaults_for_timestamp
+
+innodb_max_dirty_pages_pct=50
+innodb_buffer_pool_size=1G
+innodb_log_files_in_group=3
+innodb_log_file_size=100M
+innodb_log_buffer_size=256M
+innodb_flush_log_at_trx_commit=2
+innodb_io_capacity=200
+innodb_read_io_threads=4
+innodb_write_io_threads=4
+innodb_file_per_table=1
+innodb_flush_method=O_DIRECT
+transaction-isolation=READ-COMMITTED
+
+max_connections = 1024
+max_allowed_packet = 16M
+max_heap_table_size = 64M
+sort_buffer_size = 4M
+join_buffer_size = 4M
+thread_cache_size = 400
+query_cache_size = 0
+query_cache_type = 0
+tmp_table_size = 64M
+
+binlog_cache_size=32K
+max_binlog_cache_size=2G
+max_binlog_size=1G
+# log-bin=Mixed
+# sync_binlog=0
+expire_logs_days=7
+
+default-storage-engine=INNODB
+lower_case_table_names=1
+long_query_time=1
+slow_query_log=1
+port=3306
+skip-name-resolve
+max_user_connections=8000
+max_connect_errors=65535
+
+user=mysql
+
+[mysqld_safe]
+log-error=/var/log/mysqld.log
+pid-file=/var/run/mysqld/mysqld.pid

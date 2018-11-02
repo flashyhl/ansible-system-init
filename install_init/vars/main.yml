@@ -1,0 +1,72 @@
+---
+env: test
+
+#分组
+java: "modify_server_name,create_op_user,domain_name_resolution,install_zabbix_agent,install_jdk,install_filebeat"
+web: "modify_server_name,create_op_user,domain_name_resolution,install_zabbix_agent,install_docker,install_filebeat"
+mysql: "install_mysql"
+rabbitmq: "install_rabbitmq"
+redis: "install_redis"
+docker: "install_docker"
+
+#配置文件以及路径
+resolv_dns_file: "/etc/resolv.conf"
+host_dns_file: "/etc/hosts"
+op_user_sudo_file: "/etc/sudoers.d/op-user"
+op_public_key_path: "/home/op/.ssh"
+zabbix_agent_config_file: "/etc/zabbix/zabbix_agentd.conf"
+filebeat_config_file: "/etc/filebeat/filebeat.yml"
+#redis_config_file: "/etc/redis/redis_6379.conf"
+mysql_config_file: "/etc/my.cnf"
+java_cert_config_file: "/etc/ssl/certs/apiclient_cert.p12"
+docker_default_file: "/etc/default/docker"
+docker_service_file: "/lib/systemd/system/docker.service"
+docker_bin: "/usr/bin/dockerd"
+
+#远程路径
+remote_package_path: "/tmp/packages"
+
+#应用包名
+jdk_package: "java-1.8.0-openjdk-1.8.0.161-2.b14.el7.x86_64"
+filebeat_package: "filebeat-6.0.1-x86_64"
+rabbitmq_package: "rabbitmq-server-3.7.7-1.el7"
+zabbix_agent_package: "zabbix-agent-3.4.8-1.el7.x86_64"
+mysql_package: "mysql-community-server-5.6.39-2.el7.x86_64"
+docker_package: "docker-ce-18.03.1.ce-1.el7.centos.x86_64"
+redis_package: "redis-4.0.11-1.el7.remi.x86_64"
+
+#Java以及Web应用路径
+java_app_path_test: "/usr/local/app"
+java_app_path_prod: "/data/app"
+app_log_path: "/data/logs"
+web_app_path_prod: "/data/web"
+web_app_path_test: "/usr/local/webroot"
+nginx_config_path: "/etc/nginx"
+nginx_confd_path: "/etc/nginx/conf.d"
+nginx_ssl_cert_path: "/etc/ssl/private"
+
+#docker配置
+docker_registry_host: "harbor.test.com"
+harbor_user: "xxxxxx"
+harbor_password: "xxxxxxxx"
+
+#Nginx镜像配置信息
+nginx_name: "nginx"
+nginx_image_url: "harbor.test.com/web/nginx"
+nginx_image_version: "v1.13.12"
+
+#Zabbix Web的配置项
+zabbix_web_url: "http://192.168.2.19/zabbix"
+zabbix_login_user: "xxxxx"
+zabbix_login_password: "xxxxx"
+zabbix_host_groups: "Linux servers"
+zabbix_link_templates: "Linux OS"
+zabbix_proxy: "172.16.1.17"
+
+#MySQL配置项
+mysql_rpm_packages: "mysql-community-client-5.6.39-2.el7.x86_64.rpm  mysql-community-devel-5.6.39-2.el7.x86_64.rpm  mysql-community-server-5.6.39-2.el7.x86_64.rpm mysql-community-common-5.6.39-2.el7.x86_64.rpm  mysql-community-libs-5.6.39-2.el7.x86_64.rpm"
+mysql_user: "root"
+mysql_passwd: "xxxxx"
+
+#Redis配置项
+redis_passw: "xxxxxx"

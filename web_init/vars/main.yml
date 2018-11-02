@@ -1,0 +1,43 @@
+---
+#Docker webroot路径
+docker_path: "/usr/share/nginx/html"
+#Nginx日志路径
+web_logs_path: "/data/logs"
+docker_logs_path: "/var/log/nginx/"
+#Nginx配置主文件
+nginx_config_path: "/etc/nginx"
+docker_config_file: "/etc/nginx/nginx.conf"
+#Nginx配置子目录
+nginx_confd_path: "/etc/nginx/conf.d"
+docker_confd_path: "/etc/nginx/conf.d"
+#Nginx证书目录
+nginx_ssl_cert: "/etc/ssl/private"
+docker_ssl_cert: "/etc/ssl/private"
+#Docker参数
+docker_package: "docker-ce-18.03.1.ce-1.el7.centos.x86_64"
+docker_image_name: "nginx:latest"
+docker_bin: "/usr/bin/dockerd"
+app_name:
+  slb:
+    ports: "80:80,443:443"
+    volumes: "{{ web_path }}:{{ docker_path }},{{ web_logs_path }}/web_slb_log/:{{ docker_logs_path }},{{ nginx_config_path }}/nginx_slb.conf:{{ docker_config_file }}:ro,{{ nginx_confd_path }}:{{ docker_confd_path }},{{ nginx_ssl_cert }}:{{ docker_ssl_cert }}"
+  
+  www:
+    ports: "8081:80"
+    volumes: "{{ web_path }}:{{ docker_path }},{{ web_logs_path }}/web_www_log/:{{ docker_logs_path }},{{ nginx_config_path }}/nginx_www.conf:{{ docker_config_file }}:ro,{{ nginx_confd_path }}:{{ docker_confd_path }},{{ nginx_ssl_cert }}:{{ docker_ssl_cert }}"
+  
+  member:
+    ports: "8082:80"
+    volumes: "{{ web_path }}:{{ docker_path }},{{ web_logs_path }}/web_member_log/:{{ docker_logs_path }},{{ nginx_config_path }}/nginx_member.conf:{{ docker_config_file }}:ro,{{ nginx_confd_path }}:{{ docker_confd_path }},{{ nginx_ssl_cert }}:{{ docker_ssl_cert }}"
+
+  lp:
+    ports: "8083:80"
+    volumes: "{{ web_path }}:{{ docker_path }},{{ web_logs_path }}/web_lp_log/:{{ docker_logs_path }},{{ nginx_config_path }}/nginx_lp.conf:{{ docker_config_file }}:ro,{{ nginx_confd_path }}:{{ docker_confd_path }},{{ nginx_ssl_cert }}:{{ docker_ssl_cert }}"
+
+  member_tutor:
+    ports: "8084:80"
+    volumes: "{{ web_path }}:{{ docker_path }},{{ web_logs_path }}/web_member_tutor_log/:{{ docker_logs_path }},{{ nginx_config_path }}/nginx_member_tutor.conf:{{ docker_config_file }}:ro,{{ nginx_confd_path }}:{{ docker_confd_path }},{{ nginx_ssl_cert }}:{{ docker_ssl_cert }}"
+
+  m:
+    ports: "8085:80"
+    volumes: "{{ web_path }}:{{ docker_path }},{{ web_logs_path }}/web_m_log/:{{ docker_logs_path }},{{ nginx_config_path }}/nginx_m.conf:{{ docker_config_file }}:ro,{{ nginx_confd_path }}:{{ docker_confd_path }},{{ nginx_ssl_cert }}:{{ docker_ssl_cert }}"

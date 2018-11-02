@@ -1,0 +1,75 @@
+---
+- name: 检查输入的服务名称名server_name是否为空
+  shell: echo "{{ server_name }}" | sed "s/\ //g" | wc -c
+  register: shell_sn_result
+  ignore_errors: True
+
+- name: 服务器名称server_name不能为空
+  fail:
+    msg: "请输入服务名!"
+  when: shell_sn_result.stdout == "1"
+
+- name: 检查选择的安装类型(install_type)
+  shell: echo "{{ install_type }}" | wc -c
+  register: shell_it_result
+  ignore_errors: True
+
+- name: 检查选择的安装类型(install_action)
+  shell: echo "{{ install_action }}" | wc -c
+  register: shell_oa_result
+  ignore_errors: True
+
+- name: 没有选择安装类型(install_type)或者择安装动作(operation_action)
+  fail:
+    msg: "请选择安装类型(install_type)或者选择操作动作(operation_action)"
+  when: 
+    - shell_it_result.stdout == "1"
+    - shell_oa_result.stdout == "1"
+
+- name: 获取Java安装类型的安装动作列表
+  shell: echo {{ java }} | sed 's/,/\n/g '
+  register: shell_java_result
+  when: "'Java' in install_type"
+
+- include_tasks: "{{ item }}.yml"
+  with_items:
+    - "{{ shell_java_result.stdout_lines }}"
+  when: "'Java' in install_type"
+
+- name: 获取Web安装类型的安装动作列表
+  shell: echo {{ web }} | sed 's/,/\n/g '
+  register: shell_web_result
+  when: "'Web' in install_type"
+
+- include_tasks: "{{ item }}.yml"
+  with_items:
+    - "{{ shell_web_result.stdout_lines }}"
+  when: "'Web' in install_type"
+
+- include_tasks: install_rabbitmq.yml
+  when: "'RabbitMQ' in install_type"
+
+- include_tasks: install_mysql.yml
+  when: "'MySQL' in install_type"
+
+- include_tasks: install_redis.yml
+  when: "'Redis' in install_type"
+
+- include_tasks: install_docker.yml
+  when: "'Docker' in install_type"
+
+- name: 获取安装动作列表
+  shell: echo {{ install_action }} | sed 's/,/\n/g '
+  register: shell_ia_result
+  when: 
+    - shell_it_result.stdout == "1"
+    - shell_oa_result.stdout != "1"
+
+- include_tasks: "{{ item }}.yml"
+  with_items:
+    - "{{ shell_ia_result.stdout_lines }}"
+  when:
+    - shell_it_result.stdout == "1"
+    - shell_oa_result.stdout != "1"
+
+

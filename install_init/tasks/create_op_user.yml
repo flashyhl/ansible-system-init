@@ -1,0 +1,43 @@
+---
+- name: 判断OP用户是否存在
+  shell: cat /etc/passwd | grep -E "^op:" | wc -l
+  register: shell_pw_result
+
+- name: OP用户已经存在，执行删除操作
+  user:
+    name: op
+    state: absent
+    remove: yes
+  when: shell_pw_result.stdout == "1"
+
+- name: 重新创建OP用户
+  user: 
+    name: op
+    comment: Operation User
+    uid: 2001
+
+- name: 创建公有key的目录(/home/op/.ssh)
+  file:
+    path: "{{ op_public_key_path }}"
+    state: directory
+    mode: 0700
+    owner: op
+    group: op
+
+- name: 复制公有key文件(authorized_keys)到目标目录
+  template:
+    src: create_op_user/authorized_keys.js
+    dest: "{{ op_public_key_path }}/authorized_keys"
+    owner: op
+    group: op
+    mode: 0600
+
+- name: 添加nopasswd权限
+  template:
+    src: create_op_user/op-user.j2
+    dest: "{{ op_user_sudo_file }}"
+    owner: root
+    group: root
+    mode: 0644
+#  when: env == "prod"
+  

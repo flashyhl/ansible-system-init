@@ -1,0 +1,18 @@
+---
+- name: "创建前端容器(web_{{ webname }})应用服务"
+  docker_container:
+    name: "web_{{ webname }}"
+    image: "{{ docker_image_name }}"
+    state: started
+    ports: "{{ app_name[webname]['ports'] }}"
+    volumes: "{{ app_name[webname]['volumes'] }}"
+    restart_policy: always
+  register: docker_result  
+
+- name: "创建前端容器( web_{{ webname }} )应用服务"
+  debug:
+    msg: "容器名为(web_{{ webname }})已创建完成"
+  when: docker_result is changed  
+
+#- debug: 
+#    msg: "{{ docker_result }}"  

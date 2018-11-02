@@ -1,0 +1,93 @@
+---
+- name: 判断目标服务器MySQL是否安装
+  shell: rpm -qa | grep "{{ mysql_package }}" | wc -l  warn=False
+  register: yum_jv_result
+  ignore_errors: True
+
+- name: 复制MySQL安装包到目标服务器中
+  copy:
+    src: mysql/
+    dest: "{{ remote_package_path }}"
+    directory_mode: True
+  when: yum_jv_result.stdout == "0"
+
+- name: 安装MySQL包以及依赖包
+  shell: "yum localinstall {{ mysql_rpm_packages }} -y"
+  args:
+    chdir: "{{ remote_package_path }}"
+    warn: False
+  when: yum_jv_result.stdout == "0"
+
+- name: 删除MySQL安装文件
+  file:
+    path: "{{ remote_package_path }}"
+    state: absent
+  when: yum_jv_result.stdout == "0"
+
+- name: 修改MySQL的配置文件
+  template:
+    src: mysql/my.cnf.j2
+    dest: "{{ mysql_config_file }}"
+  when:
+    - yum_jv_result.stdout == "0"
+
+- name: 启动MySQL服务
+  systemd:
+    state: started
+    enabled: yes
+    name: mysqld
+  when:
+    - yum_jv_result.stdout == "0"
+
+- name: 等待MySQL启动
+  wait_for:
+    port: 3306
+    host: "{{ ansible_default_ipv4.address }}"
+    timeout: 5
+  register: return_result
+  until: return_result.elapsed == 0
+  retries: 12
+  delay: 5
+  ignore_errors: True
+  when: yum_jv_result.stdout == "0"
+
+- name: MySQL启动成功
+  debug:
+    msg: "MySQL安装成功，可以正常使用"
+  when: 
+    - return_result.elapsed is defined
+    - return_result.elapsed == 0
+    - yum_jv_result.stdout == "0"
+
+- name: MySQL启动失败 
+  fail:
+    msg: "MySQL安装失败，需要手动安装"
+  when:
+    - return_result.elapsed is defined
+    - return_result.elapsed != 0
+    - yum_jv_result.stdout == "0"
+
+- name: 安装MySQL-python模块
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - MySQL-python
+
+- name: 修改MySQL用户Root的密码
+  mysql_user:
+    user: "{{ mysql_user }}"
+    password: "{{ mysql_passwd }}"
+    priv: '*.*:ALL,GRANT'
+    host: localhost
+    state: present
+  when:
+    - return_result.elapsed is defined
+    - return_result.elapsed == 0
+    - yum_jv_result.stdout == "0"
+
+- name: 目标服务器MySQL已经安装，不需要再次安装
+  debug: 
+    msg: "MySQL不需要安装"
+  when: yum_jv_result.stdout != "0"

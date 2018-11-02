@@ -1,0 +1,29 @@
+---
+#通用设置
+default_encoding: "utf8mb4"
+mysql_dump_path: "/tmp/sqldump"
+import_user: "xxx"
+import_password: "xxxxx"
+import_port: 3306
+import_host: "localhost"
+#MySQL设置
+mysql_package: "mysql-community-server-5.6.39-2.el7.x86_64"
+mysql_bin: "/usr/sbin/mysqld"
+
+#MySQL模板账号(SIT/ST/UAT)
+account:
+  sit:
+    login_host: "192.168.2.21"
+    login_user: "xx"
+    login_password: "xxxxx" 
+    login_port: 3306
+  st:
+    login_host: "192.168.2.22"
+    login_user: "xx"
+    login_password: "xxxxxx" 
+    login_port: 3306
+  uat:
+    login_host: "192.168.2.31"
+    login_user: "xx"
+    login_password: "xxxxxx"
+    login_port: 3306

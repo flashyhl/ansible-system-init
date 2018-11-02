@@ -1,0 +1,78 @@
+---
+- name: 判断目标服务器FileBeat是否安装
+  shell: rpm -qa | grep "{{ filebeat_package }}" | wc -l  warn=False
+  register: yum_jv_result
+  ignore_errors: True
+
+- name: 复制FileBeat安装包到目标服务器中
+  copy:
+    src: filebeat/
+    dest: "{{ remote_package_path }}"
+    directory_mode: True
+  when: yum_jv_result.stdout == "0"
+
+- name: 获取FileBeat安装包列表
+  find:
+    paths: "{{ remote_package_path }}"
+    patterns: '*.rpm'
+  register: files_list
+  when: yum_jv_result.stdout == "0"
+
+- name: 安装FileBeat包以及依赖包
+  yum:
+    name: "{{ line_item.path }}"
+    state: present
+  with_items: "{{ files_list.files }}"
+  loop_control:
+    loop_var: line_item
+  when: yum_jv_result.stdout == "0"
+
+- name: 删除FileBeat安装文件
+  file:
+    path: "{{ remote_package_path }}"
+    state: absent
+  when: yum_jv_result.stdout == "0"
+
+- name: 修改FileBeat的配置文件
+  template:
+    src: filebeat/filebeat.yml.j2
+    dest: "{{ filebeat_config_file }}"
+  when:
+    - yum_jv_result.stdout == "0"
+
+- name: 启动FileBeat服务
+  systemd:
+    state: started
+    enabled: yes
+    name: filebeat
+  when:
+    - yum_jv_result.stdout == "0"
+
+- name: 等待FileBeat启动
+  shell: ps -ef | grep -v "grep" | grep "{{ filebeat_config_file }}" | wc -l
+  register: return_result
+  until: return_result.stdout != "0"
+  retries: 10
+  delay: 1
+  ignore_errors: True
+  when:
+    - yum_jv_result.stdout == "0"
+
+- name: FileBeat启动成功
+  debug:
+    msg: "Filebeat安装成功，可以正常使用"
+  when:
+    - return_result.stdout != "0"
+    - yum_jv_result.stdout == "0"
+
+- name: FileBeat启动失败 
+  fail:
+    msg: "FileBeat安装失败，需要手动安装"
+  when:
+    - return_result.stdout == "0" 
+    - yum_jv_result.stdout == "0" 
+
+- name: 目标服务器FileBeat已经安装，不需要再次安装
+  debug: 
+    msg: "FileBeat不需要安装"
+  when: yum_jv_result.stdout != "0"

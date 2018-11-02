@@ -1,0 +1,58 @@
+---
+- name: "检查目标服务器{{ server_name }}的数据目录是否存在"
+  stat:
+    path: "{{ mysql_dump_path }}"
+  register: check_result
+
+- name: 数据目录不存在，需要创建
+  file:
+    path: "{{ mysql_dump_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  when: 
+    - not check_result.stat.exists
+
+- name: "Dump出{{ env_attr }}环境的数据库数据到目标服务器{{ server_name }}"
+  mysql_db:
+    login_host: "{{ account[env_attr]['login_host'] }}"
+    login_port: "{{ account[env_attr]['login_port'] }}"
+    login_password: "{{ account[env_attr]['login_password'] }}"
+    login_user: "{{ account[env_attr]['login_user'] }}"
+    encoding: "{{ default_encoding }}"
+    name: all
+    state: dump
+    target: "{{ mysql_dump_path }}/all.sql"
+
+- name: "从SQL文件导入数据库数据"
+  mysql_db:
+    login_host: "{{ import_host }}"
+    login_port: "{{ import_port }}"
+    login_password: "{{ import_password }}"
+    login_user: "{{ import_user }}"
+    encoding: "{{ default_encoding }}"
+    name: all
+    state: import
+    target: "{{ mysql_dump_path }}/all.sql"
+
+- name: "删除服务器{{ server_name }}中的数据目录"
+  file:
+    path: "{{ mysql_dump_path }}"
+    state: absent
+
+- name: 刷新用户信息以及权限设置
+  shell: mysql -u{{ import_user }} -p{{ import_password }} -h{{ import_host }} -P{{ import_port }} -N -e "flush privileges;"
+  register: mysql_result
+
+- name: 初始化已经完成，请核验
+  debug:
+    msg: "数据库数据导入完成！"
+  when: mysql_result is changed
+
+
+
+
+
+    
+- 

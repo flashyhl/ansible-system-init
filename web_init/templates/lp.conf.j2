@@ -1,0 +1,24 @@
+server {
+    listen       80;
+    server_name  {{ host_lp }};
+    root   /usr/share/nginx/html/lp;
+
+    location / {
+        rewrite ^([^.]*[^/])$ $1/ permanent;
+        try_files $uri $uri/ /index.html;
+        index  index.html index.htm;
+    }
+
+
+#  location ~ .*\.(htm|html)$ {
+#        add_header Cache-Control no-cache;
+#        add_header Pragma no-cache;
+#    }
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html/lp;
+    }
+
+}
+

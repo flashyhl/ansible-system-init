@@ -1,0 +1,243 @@
+#This is config file for nginx_slb
+server {
+    listen 80;
+    server_name  {{ host_www }};
+
+   location / {
+   proxy_pass http://{{ host_www }}:8081;
+   }
+    }
+
+server {
+    listen 443 ssl;
+    server_name  {{ host_www }};
+
+    ssl on;
+    ssl_certificate /etc/ssl/private/igix.crt;
+    ssl_certificate_key /etc/ssl/private/igix.key;
+
+   location / {
+   proxy_pass http://{{ host_www }}:8081;
+   }
+    }
+
+server {
+    listen 80;
+    server_name  {{ host_member }};
+
+   location / {
+   proxy_pass http://{{ host_member }}:8082;
+   }
+   location /student {
+   proxy_pass http://{{ host_member }}:8082;
+   }
+   location /tutor {
+   proxy_pass http://{{ host_member }}:8084;
+   }
+    }
+
+server {
+    listen 443 ssl;
+    server_name  {{ host_member }};
+
+    ssl on;
+    ssl_certificate /etc/ssl/private/igix.crt;
+    ssl_certificate_key /etc/ssl/private/igix.key;
+
+   location / {
+   proxy_pass http://{{ host_member }}:8082;
+   }
+   location /student {
+   proxy_pass http://{{ host_member }}:8082;
+   }
+   location /tutor {
+   proxy_pass http://{{ host_member }}:8084;
+   }
+    }
+
+
+server {
+    listen       80;
+    server_name  {{ host_lp }};
+
+   location / {
+   proxy_pass http://{{ host_lp }}:8083;
+   }
+    }
+
+server {
+    listen 443 ssl;
+    server_name  {{ host_lp }};
+
+    ssl on;
+    ssl_certificate /etc/ssl/private/igix.crt;
+    ssl_certificate_key /etc/ssl/private/igix.key;
+
+   location / {
+   proxy_pass http://{{ host_lp }}:8083;
+   }
+    }
+
+server {
+    listen       80;
+    server_name  {{ host_management }};
+
+   location / {
+   proxy_pass http://{{ host_management }}:8888;
+   client_max_body_size  500m;
+   }
+    }
+
+server {
+    listen 443 ssl;
+    server_name  {{ host_management }};
+
+    ssl on;
+    ssl_certificate /etc/ssl/private/igix.crt;
+    ssl_certificate_key /etc/ssl/private/igix.key;
+
+   location / {
+   proxy_pass http://{{ host_management }}:8888;
+   client_max_body_size  500m;
+   }
+    }
+
+server {
+    listen       80;
+    server_name  {{ host_api }};
+
+#   location /member/ {
+#   proxy_pass http://{{ host_api }}:20201;
+#   }
+#
+#   location /quiz/ {
+#   proxy_pass http://{{ host_api }}:20401;
+#   }
+#
+#   location /session/ {
+#   proxy_pass http://{{ host_api }}:20501;
+#   }
+#
+#   location /master/ {
+#   proxy_pass http://{{ host_api }}:20101;
+#   }
+#
+#   location /course/ {
+#   proxy_pass http://{{ host_api }}:20301;
+#   }
+#
+#   location /order/ {
+#   proxy_pass http://{{ host_api }}:20801;
+#   }
+
+   location /tutor/ {
+   proxy_pass http://{{ host_api }}:20601;
+   }
+
+   location /student/pc/ {
+   proxy_pass http://{{ host_api }}:20101;
+   }
+
+   location /student/h5/ {
+   proxy_pass http://{{ host_api }}:20201;
+   }
+   
+   location /wx/ {
+   proxy_pass http://{{ host_api }}:23201;
+   }
+    }
+
+server {
+    listen 443 ssl;
+    server_name  {{ host_api }};
+
+    ssl on;
+    ssl_certificate /etc/ssl/private/1_{{ host_api }}_bundle.crt;
+    ssl_certificate_key /etc/ssl/private/2_{{ host_api }}.key;
+
+#   location /member/ {
+#   proxy_pass http://{{ host_api }}:20201;
+#   }
+
+#   location /quiz/ {
+#   proxy_pass http://{{ host_api }}:20401;
+#   }
+#
+#   location /session/ {
+#   proxy_pass http://{{ host_api }}:20501;
+#   }
+#
+#   location /master/ {
+#   proxy_pass http://{{ host_api }}:20101;
+#   }
+#
+#   location /course/ {
+#   proxy_pass http://{{ host_api }}:20301;
+#   }
+#
+#   location /order/ {
+#   proxy_pass http://{{ host_api }}:20801;
+#   }
+
+   location /tutor/ {
+   proxy_pass http://{{ host_api }}:20601;
+   }
+
+   location /student/pc/ {
+   proxy_pass http://{{ host_api }}:20101;
+   }
+
+   location /student/h5/ {
+   proxy_pass http://{{ host_api }}:20201;
+   }
+
+   location /wx/ {
+   proxy_pass http://{{ host_api }}:23201;
+   }
+    }
+
+server {
+    listen 80;
+    server_name  {{ host_m }};
+
+   location / {
+   proxy_pass http://{{ host_m }}:8085;
+   }
+    }
+
+server {
+    listen 443 ssl;
+    server_name  {{ host_m }};
+
+    ssl on;
+    ssl_certificate /etc/ssl/private/igix.crt;
+    ssl_certificate_key /etc/ssl/private/igix.key;
+
+   location / {
+   proxy_pass http://{{ host_m }}:8085;
+   }
+    }
+
+server {
+    listen       80;
+    server_name  {{ host_callcenter }};
+
+   location / {
+   proxy_pass http://{{ host_callcenter }}:8888;
+   client_max_body_size  500m;
+   }
+    }
+
+server {
+    listen 443 ssl;
+    server_name  {{ host_callcenter }};
+
+    ssl on;
+    ssl_certificate /etc/ssl/private/igix.crt;
+    ssl_certificate_key /etc/ssl/private/igix.key;
+
+   location / {
+   proxy_pass http://{{ host_callcenter }}:8888;
+   client_max_body_size  500m;
+   }
+    }

@@ -1,0 +1,28 @@
+---
+- name: 检查目标服务器Docker是否安装
+  shell: rpm -qa | grep "{{ docker_package }}" | wc -l  warn=False
+  register: yum_result
+  ignore_errors: True
+
+- name: 目标服务器Docker未安装
+  fail: 
+    msg: "目标服务器Docker未安装,请安装之后再进行初始化"
+  when: yum_result.stdout == "0"
+
+- name: 检查目标服务器Docker是否启动
+  shell: ps -ef | grep -v "grep" | grep "{{ docker_bin }}" | wc -l
+  register: ps_result
+
+- name: 目标服务器Docker未启动
+  fail:
+    msg: "目标服务器Docker未启动,请启动之后再进行初始化"
+  when: ps_result.stdout == "0"
+
+- name: 检查目标服务器Nginx的Docker镜像是否存在
+  shell: docker images | awk '{print $1":"$2}' | grep "{{ docker_image_name }}" |wc -l
+  register: docker_result
+
+- name: 目标服务器Nginx的Docker镜像不存在
+  fail:
+    msg: "目标服务器Nginx的Docker镜像不存在，请拉取后进行初始化"
+  when: docker_result.stdout == "0"

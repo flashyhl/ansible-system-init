@@ -1,0 +1,221 @@
+---
+- name: 判断目标服务器Docker是否安装
+  shell: rpm -qa | grep "{{ docker_package }}" | wc -l  warn=False
+  register: yum_jv_result
+  ignore_errors: True
+
+- name: 添加yum仓库源Epel
+  yum:
+    name: epel-release
+    state: present
+
+- name: 安装安装依赖包
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - python2-pip
+    - python-docker-py 
+
+- name: 复制Docker安装包到目标服务器中
+  copy:
+    src: docker/
+    dest: "{{ remote_package_path }}"
+    directory_mode: True
+  when: yum_jv_result.stdout == "0"
+
+- name: 获取Docker安装包列表
+  find:
+    paths: "{{ remote_package_path }}"
+    patterns: '*.rpm'
+  register: files_list
+  when: yum_jv_result.stdout == "0"
+
+- name: 安装Docker包以及依赖包
+  yum:
+    name: "{{ line_item.path }}"
+    state: present
+  with_items: "{{ files_list.files }}"
+  loop_control:
+    loop_var: line_item
+  when: yum_jv_result.stdout == "0"
+
+- name: 删除Docker安装文件
+  file:
+    path: "{{ remote_package_path }}"
+    state: absent
+  when: yum_jv_result.stdout == "0"
+
+- name: 修改Docker默认的配置文件
+  template:
+    src: docker/docker.j2
+    dest: "{{ docker_default_file }}"
+  when:
+    - yum_jv_result.stdout == "0"
+
+- name: 修改Docker服务启动的配置文件
+  template:
+    src: docker/docker.service.j2
+    dest: "{{ docker_service_file }}"
+  when:
+    - yum_jv_result.stdout == "0"
+
+- name: 启动Docker服务
+  systemd:
+    state: started
+    enabled: yes
+    name: docker
+  when:
+    - yum_jv_result.stdout == "0"
+
+- name: 等待Docker启动
+  shell: ps -ef | grep -v "grep" | grep "{{ docker_bin }}" | wc -l
+  register: return_result
+  until: return_result.stdout != "0"
+  retries: 10
+  delay: 1
+  ignore_errors: True
+  when:
+    - yum_jv_result.stdout == "0"
+
+- name: Docker启动成功
+  debug:
+    msg: "Docker安装成功，可以正常使用"
+  when:
+    - return_result.stdout != "0"
+    - yum_jv_result.stdout == "0"
+
+- name: Docker启动失败 
+  fail:
+    msg: "Docker安装失败，需要手动安装"
+  when:
+    - return_result.stdout == "0" 
+    - yum_jv_result.stdout == "0" 
+
+- name: 检查测试环境Web应用目录是否存在
+  stat:
+    path: "{{ web_app_path_test }}"
+  register: stat_path
+  when:
+    - env == "test"
+    - yum_jv_result.stdout == "0"
+
+- name: 测试环境Web应用目录不存在，需要创建
+  file:
+    path: "{{ web_app_path_test }}"
+    state: directory 
+    owner: root
+    group: root
+    mode: 0755
+  when: 
+    - env == "test" 
+    - yum_jv_result.stdout == "0"
+    - not stat_path.stat.exists
+
+- name: 检查生产环境Web应用目录是否存在
+  stat:
+    path: "{{ web_app_path_prod }}"
+  register: stat_path
+  when:
+    - env == "prod"
+    - yum_jv_result.stdout == "0"
+
+- name: 生产环境Web应用目录不存在，需要创建
+  file:
+    path: "{{ web_app_path_prod  }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  when: 
+    - env == "prod" 
+    - yum_jv_result.stdout == "0"
+    - not stat_path.stat.exists
+
+- name: 检查测试或者生产环境Nginx的logs目录是否存在
+  stat:
+    path: "{{ app_log_path }}"
+  register: stat_path
+  when:
+    - yum_jv_result.stdout == "0"
+
+- name: 测试或者生产环境Nginx的logs目录不存在，需要创建
+  file:
+    path: "{{ app_log_path  }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  when: 
+    - yum_jv_result.stdout == "0"
+    - not stat_path.stat.exists
+
+
+- name: 检查测试或者生产环境Nginx的配置目录是否存在
+  stat:
+    path: "{{ nginx_config_path }}"
+  register: stat_path
+  when:
+    - yum_jv_result.stdout == "0"
+
+- name: 测试或生产环境Nginx的配置目录不存在，需要创建
+  file:
+    path: "{{ nginx_config_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  when:
+    - yum_jv_result.stdout == "0"
+    - not stat_path.stat.exists  
+
+- name: 检查测试或者生产环境Nginx的配置子目录是否存在
+  stat:
+    path: "{{ nginx_confd_path }}"
+  register: stat_path
+  when:
+    - yum_jv_result.stdout == "0"
+
+- name: 测试或生产环境Nginx的配置子目录不存在，需要创建
+  file:
+    path: "{{ nginx_confd_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  when:
+    - yum_jv_result.stdout == "0"
+    - not stat_path.stat.exists
+
+- name: 复制Nginx的SSL证书至目标服务器
+  copy:
+    src: nginx-ssl-certs/
+    dest: "{{ nginx_ssl_cert_path }}"
+    directory_mode: True
+  when:
+    - yum_jv_result.stdout == "0"
+    - env == "test" 
+
+- name: 登录Docker私有仓库
+  docker_login:
+    registry: "{{ docker_registry_host }}"
+    username: "{{ harbor_user }}"
+    password: "{{ harbor_password }}"
+    reauthorize: yes
+  when:
+    - return_result.stdout != "0"
+    - yum_jv_result.stdout == "0"
+   
+- name: 从镜像仓库拉取Nginx镜像到本地
+  docker_image:
+    name: "{{ nginx_image_url }}:{{ nginx_image_version }}"
+    repository: "{{ nginx_name }}:latest"
+  when:
+    - return_result.stdout != "0"
+    - yum_jv_result.stdout == "0"
+
+- name: 目标服务器Docker已经安装，不需要再次安装
+  debug: 
+    msg: "Docker不需要安装"
+  when: yum_jv_result.stdout != "0"

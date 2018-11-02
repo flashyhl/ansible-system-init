@@ -1,0 +1,16 @@
+PidFile=/var/run/zabbix/zabbix_agentd.pid
+LogFile=/var/log/zabbix/zabbix_agentd.log
+LogFileSize=0
+
+{% if env == "test" %}
+Server=192.168.2.19
+ServerActive=192.168.2.19
+{% elif env == "prod" %}
+Server=172.16.1.17
+ServerActive=172.16.1.17
+{% endif %}
+
+Hostname={{ server_name }}
+Include=/etc/zabbix/zabbix_agentd.d/*.conf
+UnsafeUserParameters=1
+
